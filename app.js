@@ -400,7 +400,9 @@ function initForm(){
         headers:{ "Content-Type":"application/json", "Accept":"application/json" },
         body: JSON.stringify(payload)
       });
-      if(!r.ok) throw new Error("HTTP "+r.status);
+      const data = await r.json().catch(()=>({}));
+      const ok = data.success === "true" || data.success === true;
+      if(!r.ok || !ok) throw new Error(data.message || ("HTTP "+r.status));
       showNote(note,true,`Obrigado, ${nome.split(" ")[0]}! Recebemos sua solicitação. Um analista Brain27 retornará com a ficha técnica e a proposta desta unidade.`);
       form.reset();
       renderSummary(); // repõe o campo de config
