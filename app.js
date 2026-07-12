@@ -353,7 +353,7 @@ function initNav(){
    Endpoint montado em partes para dificultar scraping do e-mail.
    Troque LEAD_MAIL pelo alias FormSubmit após ativar (1º envio), se quiser
    ocultar totalmente o e-mail. */
-const LEAD_MAIL = ["g3.representante","gmail.com"];
+const LEAD_MAIL = ["gersongomes","brain27.com.br"];
 const LEAD_ENDPOINT = "https://formsubmit.co/ajax/" + LEAD_MAIL[0] + "@" + LEAD_MAIL[1];
 
 function showNote(note, ok, msg){
