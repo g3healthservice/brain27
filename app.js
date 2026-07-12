@@ -18,6 +18,7 @@ const IMAGES = {
   case1:    "assets/case1.jpg",
   case2:    "assets/case2.jpg",
   case3:    "assets/case3.jpg",
+  case4:    "assets/case4.jpg",
   // módulos de serviço
   m_mamografia:  "assets/m_mamografia.jpg",
   m_preventivo:  "assets/m_preventivo.jpg",

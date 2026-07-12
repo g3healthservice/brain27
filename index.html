@@ -9,20 +9,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
+<link rel="icon" type="image/png" href="assets/favicon.png" />
+<link rel="apple-touch-icon" href="assets/favicon.png" />
 </head>
 <body>
 
 <!-- ===================== HEADER ===================== -->
 <header class="site-header" id="topo">
   <div class="wrap header-inner">
-    <a href="#topo" class="brand" aria-label="Brain27 - início">
-      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
-        <path d="M8 20c0-6.6 5.4-12 12-12 4.4 0 8.3 2.4 10.4 6M32 20c0 6.6-5.4 12-12 12-4.4 0-8.3-2.4-10.4-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-        <circle cx="20" cy="20" r="3.4" fill="currentColor"/>
-        <circle cx="30.4" cy="14" r="2" fill="currentColor"/>
-        <circle cx="9.6" cy="26" r="2" fill="currentColor"/>
-      </svg>
-      <span class="brand-text">Brain<span class="brand-27">27</span></span>
+    <a href="#topo" class="brand" aria-label="Brain27 Group - início">
+      <img class="brand-logo" src="assets/logo.png" alt="Brain27 Group" />
     </a>
 
     <nav class="main-nav" aria-label="Navegação principal">
@@ -104,8 +100,8 @@
       </article>
 
       <!-- CAMINHÃO -->
-      <article class="unit-card unit-card--featured">
-        <div class="unit-media"><img class="ph" data-key="truck" alt="Caminhão baú adaptado como unidade móvel de saúde" /><span class="unit-tag unit-tag--accent">Mais procurado</span></div>
+      <article class="unit-card">
+        <div class="unit-media"><img class="ph" data-key="truck" alt="Caminhão baú adaptado como unidade móvel de saúde" /><span class="unit-tag">Versátil</span></div>
         <div class="unit-body">
           <h3>Caminhão Baú</h3>
           <p class="unit-desc">O equilíbrio entre mobilidade e capacidade. Comporta consultórios, sala de exames e recepção com conforto e climatização central.</p>
@@ -115,13 +111,13 @@
             <li><span>Ideal para</span><strong>Consultas, odonto, oftalmo</strong></li>
             <li><span>Acesso</span><strong>Elevador PCD opcional</strong></li>
           </ul>
-          <a href="#configurador" class="btn btn-accent btn-block" data-preset="truck">Configurar um Caminhão</a>
+          <a href="#configurador" class="btn btn-outline btn-block" data-preset="truck">Configurar um Caminhão</a>
         </div>
       </article>
 
       <!-- CARRETA -->
-      <article class="unit-card">
-        <div class="unit-media"><img class="ph" data-key="carreta" alt="Carreta semirreboque expansível como unidade móvel de saúde de alta capacidade" /><span class="unit-tag">Alta capacidade</span></div>
+      <article class="unit-card unit-card--featured">
+        <div class="unit-media"><img class="ph" data-key="carreta" alt="Carreta semirreboque expansível como unidade móvel de saúde de alta capacidade" /><span class="unit-tag unit-tag--accent">Mais procurado</span></div>
         <div class="unit-body">
           <h3>Carreta Semirreboque</h3>
           <p class="unit-desc">Estrutura expansível de alto desempenho. Suporta sala de mamografia blindada, múltiplos consultórios, elevador PCD e até 10 ambientes.</p>
@@ -131,7 +127,7 @@
             <li><span>Ideal para</span><strong>Mamografia, diagnóstico</strong></li>
             <li><span>Acesso</span><strong>Elevador PCD + expansão lateral</strong></li>
           </ul>
-          <a href="#configurador" class="btn btn-outline btn-block" data-preset="carreta">Configurar uma Carreta</a>
+          <a href="#configurador" class="btn btn-accent btn-block" data-preset="carreta">Configurar uma Carreta</a>
         </div>
       </article>
     </div>
@@ -300,6 +296,14 @@
           <p>Unidade equipada com mamógrafo e ressonância magnética digital, com laudo médico especializado e logística de imagens.</p>
         </div>
       </article>
+      <article class="case-card">
+        <img class="ph" data-key="case4" alt="Cirurgia de catarata em centro cirúrgico móvel com microscópio oftálmico" />
+        <div class="case-body">
+          <span class="case-kind">Mutirão Oftalmológico</span>
+          <h3>Cirurgia de catarata</h3>
+          <p>Centro cirúrgico móvel com microscópio oftálmico e estrutura para mutirões de catarata — cirurgias eletivas com alta no mesmo dia.</p>
+        </div>
+      </article>
     </div>
   </div>
 </section>
@@ -339,7 +343,7 @@
 <footer class="site-footer">
   <div class="wrap footer-inner">
     <div class="footer-brand">
-      <span class="brand-text brand-text--footer">Brain<span class="brand-27">27</span></span>
+      <span class="footer-logo-chip"><img src="assets/logo.png" alt="Brain27 Group" /></span>
       <p>Plataforma de configuração de unidades móveis de saúde. Do ETP à unidade rodando na rua.</p>
     </div>
     <div class="footer-cols">
