@@ -321,8 +321,16 @@
         <li><strong>Conformidade regulatória</strong> ANVISA, PNQM e proteção radiológica</li>
       </ul>
     </div>
-    <form class="contato-form" id="contatoForm" novalidate>
+    <form class="contato-form" id="contatoForm"
+          action="https://formsubmit.co/gersongomes@brain27.com.br"
+          method="POST" enctype="multipart/form-data" novalidate>
+      <!-- FormSubmit: config -->
+      <input type="hidden" name="_subject" value="Brain27 — nova solicitação de proposta" />
+      <input type="hidden" name="_template" value="table" />
+      <input type="hidden" name="_captcha" value="false" />
+      <input type="hidden" name="_next" value="https://g3healthservice.github.io/brain27/?enviado=1#contato" />
       <input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0" />
+
       <div class="field-row">
         <label class="field"><span>Nome</span><input type="text" name="nome" required autocomplete="name" /></label>
         <label class="field"><span>Organização / Município</span><input type="text" name="org" autocomplete="organization" /></label>
@@ -333,6 +341,23 @@
       </div>
       <label class="field"><span>Configuração de interesse</span><input type="text" name="config" id="configField" placeholder="Ex.: Carreta — Mamografia + Preventivo + Elevador PCD" /></label>
       <label class="field"><span>Mensagem</span><textarea name="msg" rows="3" placeholder="Conte o objetivo do atendimento, a região e o volume previsto."></textarea></label>
+
+      <!-- Anexos do cliente (Word, Excel, PDF, fotos, XML, etc.) -->
+      <div class="field">
+        <span>Anexar arquivos <em>(opcional)</em> — editais, plantas, planilhas, fotos</span>
+        <label class="file-drop" id="fileDrop">
+          <input type="file" name="attachment" id="anexos" multiple
+                 accept=".pdf,.doc,.docx,.odt,.rtf,.xls,.xlsx,.ods,.csv,.xml,.txt,.ppt,.pptx,.zip,.rar,.7z,.dwg,.png,.jpg,.jpeg,.gif,.webp,.heic,.bmp,.tif,.tiff,image/*" />
+          <span class="file-drop-inner">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.2 9.19a1.5 1.5 0 0 1-2.12-2.12l8.49-8.49"/></svg>
+            <b>Anexar arquivos</b>
+            <small>Word, Excel, PDF, fotos, XML… — clique ou arraste aqui</small>
+          </span>
+        </label>
+        <ul class="file-list" id="fileList" hidden></ul>
+        <p class="file-hint" id="fileHint">Vários arquivos permitidos. Total de até 10 MB. Acima disso, envie um link (Drive/WeTransfer) na mensagem.</p>
+      </div>
+
       <button type="submit" class="btn btn-accent btn-block">Enviar solicitação</button>
       <p class="form-note" id="formNote" hidden></p>
     </form>

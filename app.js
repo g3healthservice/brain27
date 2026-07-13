@@ -365,53 +365,104 @@ function showNote(note, ok, msg){
   note.textContent = msg;
 }
 
+const MAX_TOTAL_ANEXOS = 10 * 1024 * 1024; // 10 MB (limite pratico do FormSubmit)
+
+function humanSize(b){
+  if(b < 1024) return b + " B";
+  if(b < 1048576) return (b/1024).toFixed(0) + " KB";
+  return (b/1048576).toFixed(1) + " MB";
+}
+
+function totalAnexos(input){
+  return Array.from(input.files || []).reduce((s,f)=>s+f.size, 0);
+}
+
+/* Lista de anexos + remocao individual (via DataTransfer) + drag-and-drop. */
+function initAnexos(){
+  const input = document.getElementById("anexos");
+  const drop  = document.getElementById("fileDrop");
+  const list  = document.getElementById("fileList");
+  const hint  = document.getElementById("fileHint");
+  if(!input || !drop || !list) return;
+  const hintBase = hint ? hint.textContent : "";
+
+  function render(){
+    const files = Array.from(input.files || []);
+    if(!files.length){ list.hidden = true; list.innerHTML = ""; if(hint){ hint.textContent = hintBase; hint.style.color = ""; } return; }
+    list.hidden = false;
+    list.innerHTML = files.map((f,i)=>
+      `<li><span class="fl-ico">📎</span>`+
+      `<span class="fl-name" title="${f.name.replace(/"/g,'&quot;')}">${f.name}</span>`+
+      `<span class="fl-size">${humanSize(f.size)}</span>`+
+      `<button type="button" class="fl-x" data-i="${i}" aria-label="Remover ${f.name}">×</button></li>`
+    ).join("");
+    const total = totalAnexos(input);
+    const over = total > MAX_TOTAL_ANEXOS;
+    if(hint){
+      hint.textContent = `${files.length} arquivo(s) · ${humanSize(total)}` +
+        (over ? " — acima de 10 MB. Remova alguns ou envie um link (Drive/WeTransfer) na mensagem." : " no total (limite 10 MB).");
+      hint.style.color = over ? "#b3403c" : "";
+    }
+    list.querySelectorAll(".fl-x").forEach(b=> b.onclick = ()=> removeAt(parseInt(b.dataset.i,10)));
+  }
+
+  function removeAt(idx){
+    const dt = new DataTransfer();
+    Array.from(input.files).forEach((f,i)=>{ if(i !== idx) dt.items.add(f); });
+    input.files = dt.files;
+    render();
+  }
+
+  input.addEventListener("change", render);
+
+  ["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add("is-drag"); }));
+  ["dragleave","dragend"].forEach(ev => drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.remove("is-drag"); }));
+  drop.addEventListener("drop", e=>{
+    e.preventDefault(); drop.classList.remove("is-drag");
+    const dt = new DataTransfer();
+    Array.from(input.files).forEach(f=> dt.items.add(f));
+    Array.from(e.dataTransfer.files).forEach(f=> dt.items.add(f));
+    input.files = dt.files;
+    render();
+  });
+}
+
 function initForm(){
   const form = document.getElementById("contatoForm");
   const note = document.getElementById("formNote");
   if(!form) return;
   const btn = form.querySelector('button[type="submit"]');
+  const input = document.getElementById("anexos");
 
-  form.addEventListener("submit", async e=>{
-    e.preventDefault();
-    if(form._honey && form._honey.value) return; // honeypot: bot
+  initAnexos();
+
+  // Mensagem de sucesso ao retornar do FormSubmit (?enviado=1).
+  if(/[?&]enviado=1/.test(location.search)){
+    showNote(note, true, "Obrigado! Recebemos sua solicitação e os anexos. Um analista Brain27 retornará com a ficha técnica e a proposta da sua unidade.");
+    const alvo = document.getElementById("contato");
+    if(alvo) setTimeout(()=> alvo.scrollIntoView({behavior:"smooth"}), 200);
+    history.replaceState(null, "", location.pathname + location.hash);
+  }
+
+  // Envio NATIVO multipart (necessario para anexos no FormSubmit); so validamos.
+  form.addEventListener("submit", e=>{
+    if(form._honey && form._honey.value){ e.preventDefault(); return; } // honeypot: bot
     const nome = form.nome.value.trim();
     const email = form.email.value.trim();
     if(!nome || !email){
-      showNote(note,false,"Por favor, preencha nome e e-mail para enviarmos sua proposta.");
+      e.preventDefault();
+      showNote(note, false, "Por favor, preencha nome e e-mail para enviarmos sua proposta.");
       return;
     }
-
-    const original = btn.textContent;
-    btn.disabled = true; btn.textContent = "Enviando…";
-
-    const payload = {
-      _subject: `Brain27 — nova solicitação de proposta (${nome})`,
-      _template: "table",
-      Nome: nome,
-      "Organização/Município": form.org.value.trim(),
-      Email: email,
-      "Telefone/WhatsApp": form.tel.value.trim(),
-      "Configuração de interesse": form.config.value.trim(),
-      Mensagem: form.msg.value.trim()
-    };
-
-    try{
-      const r = await fetch(LEAD_ENDPOINT, {
-        method:"POST",
-        headers:{ "Content-Type":"application/json", "Accept":"application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json().catch(()=>({}));
-      const ok = data.success === "true" || data.success === true;
-      if(!r.ok || !ok) throw new Error(data.message || ("HTTP "+r.status));
-      showNote(note,true,`Obrigado, ${nome.split(" ")[0]}! Recebemos sua solicitação. Um analista Brain27 retornará com a ficha técnica e a proposta desta unidade.`);
-      form.reset();
-      renderSummary(); // repõe o campo de config
-    }catch(err){
-      showNote(note,false,`Não foi possível enviar agora. Tente novamente em instantes ou escreva para ${LEAD_MAIL[0]}@${LEAD_MAIL[1]}.`);
-    }finally{
-      btn.disabled = false; btn.textContent = original;
+    if(input && totalAnexos(input) > MAX_TOTAL_ANEXOS){
+      e.preventDefault();
+      showNote(note, false, "Os anexos somam mais de 10 MB. Remova alguns arquivos ou envie um link (Drive/WeTransfer) na mensagem.");
+      return;
     }
+    const subj = form.querySelector('input[name="_subject"]');
+    if(subj) subj.value = `Brain27 — nova solicitação de proposta (${nome})`;
+    btn.disabled = true; btn.textContent = "Enviando…";
+    // sem preventDefault: o navegador faz o POST multipart para o FormSubmit.
   });
 }
 
