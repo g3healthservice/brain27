@@ -116,6 +116,11 @@ function loadImages(){
     const key = img.dataset.key;
     applyImage(img, IMAGES[key], img.alt || key);
   });
+  document.querySelectorAll("img.ph[data-src]").forEach(img=>{
+    if(img.dataset.loaded) return;
+    img.dataset.loaded = "1";
+    applyImage(img, img.dataset.src, img.alt || "");
+  });
 }
 function applyImage(img, url, label){
   if(!url){ markBroken(img,label); return; }
@@ -475,6 +480,248 @@ function initReset(){
   };
 }
 
+/* ===========================================================
+   PORTFÓLIO & PROPOSTA TÉCNICA  (dados: catalogo.js -> CATALOGO_G3)
+   =========================================================== */
+const G3 = window.CATALOGO_G3 || {catalogo:[],veiculos:[],premissas:{},ancoras:[]};
+const BRL  = n => (n==null||isNaN(n)) ? "—" : "R$ " + Number(n).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0});
+const BRL2 = n => (n==null||isNaN(n)) ? "—" : "R$ " + Number(n).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const PCT  = n => (n==null?"—":(n*100).toLocaleString("pt-BR",{maximumFractionDigits:2})+"%");
+
+const pfState = { cat:"Todos", plat:"Todas", q:"" };
+
+function svcImage(s){
+  const t = (s.servico||"").toLowerCase();
+  if(t.includes("mulher")||t.includes("mamografia")) return "assets/case1.jpg";
+  if(t.includes("catarata")||t.includes("oftalmo"))  return "assets/case4.jpg";
+  if(t.includes("cirúrg")||t.includes("cirurgia"))   return "assets/case4.jpg";
+  if(t.includes("odonto"))                            return "assets/m_odonto.jpg";
+  if(t.includes("tomografia")||t.includes("ressonância")||t.includes("imagem")||t.includes("raio")||t.includes("radiologia")) return "assets/case3.jpg";
+  if(t.includes("ultrassom")||t.includes("ultrassonografia")) return "assets/m_ultrassom.jpg";
+  if(t.includes("sangue")||t.includes("análises")||t.includes("coleta")||t.includes("laborat")) return "assets/m_coleta.jpg";
+  if(t.includes("vacina")||t.includes("primária")||t.includes("triagem")) return "assets/m_triagem.jpg";
+  return "assets/m_consulta.jpg";
+}
+function platBadge(p){ return p||"—"; }
+
+function renderPortfolioFilters(){
+  const cats = ["Todos", ...Array.from(new Set(G3.catalogo.map(s=>s.categoria).filter(Boolean)))];
+  const plats = ["Todas","Van","Caminhão","Carreta"];
+  const catEl = document.getElementById("pfCat");
+  const platEl = document.getElementById("pfPlat");
+  if(catEl) catEl.innerHTML = cats.map(c=>`<button class="pf-chip ${pfState.cat===c?"on":""}" data-cat="${c}" type="button">${c}</button>`).join("");
+  if(platEl) platEl.innerHTML = plats.map(p=>`<button class="pf-chip ${pfState.plat===p?"on":""}" data-plat="${p}" type="button">${p}</button>`).join("");
+  catEl && catEl.querySelectorAll("[data-cat]").forEach(b=> b.onclick=()=>{ pfState.cat=b.dataset.cat; renderPortfolio(); });
+  platEl && platEl.querySelectorAll("[data-plat]").forEach(b=> b.onclick=()=>{ pfState.plat=b.dataset.plat; renderPortfolio(); });
+}
+
+function renderPortfolio(){
+  renderPortfolioFilters();
+  const grid = document.getElementById("pfGrid");
+  if(!grid) return;
+  const q = pfState.q.trim().toLowerCase();
+  const list = G3.catalogo.filter(s=>{
+    if(pfState.cat!=="Todos" && s.categoria!==pfState.cat) return false;
+    if(pfState.plat!=="Todas" && s.plataforma!==pfState.plat) return false;
+    if(q && !(`${s.servico} ${s.obs} ${s.plataforma}`.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  if(list.length===0){ grid.innerHTML = `<p class="pf-empty">Nenhum serviço encontrado para esse filtro.</p>`; return; }
+  grid.innerHTML = list.map(s=>{
+    const idx = G3.catalogo.indexOf(s);
+    return `<article class="pf-card">
+      <div class="pf-media"><img class="ph" data-src="${svcImage(s)}" alt="${s.servico}"><span class="pf-plat">${platBadge(s.plataforma)}</span></div>
+      <div class="pf-body">
+        <span class="pf-cat">${s.categoria||""}</span>
+        <h3>${s.servico}</h3>
+        <p class="pf-obs">${s.obs||""}</p>
+        <div class="pf-vals">
+          <div><span>Locação seca</span><strong>${BRL(s.seca)}<i>/mês</i></strong></div>
+          <div class="pf-val-main"><span>Turnkey</span><strong>${BRL(s.turnkey)}<i>/mês</i></strong></div>
+        </div>
+        <button class="btn btn-accent btn-block btn-sm" data-prop="${idx}" type="button">Gerar proposta</button>
+      </div>
+    </article>`;
+  }).join("");
+  grid.querySelectorAll("[data-prop]").forEach(b=> b.onclick=()=> openProposal(parseInt(b.dataset.prop)));
+  loadImages();
+}
+
+/* ---------- cálculo da proposta ---------- */
+function proposalValues(s, o){
+  const meses = Math.min(120, Math.max(1, parseInt(o.prazo)||12));
+  const qtd   = Math.min(99, Math.max(1, parseInt(o.qtd)||1));
+  let mensalUnit;
+  if(o.modalidade==="seca") mensalUnit = s.seca;
+  else mensalUnit = (o.regiao==="amazonia") ? s.turnkeyAmazonia : s.turnkey;
+  const mensalTotal = (mensalUnit||0)*qtd;
+  return { meses, qtd, mensalUnit, mensalTotal, global: mensalTotal*meses };
+}
+
+function currentOpts(){
+  return {
+    modalidade: document.getElementById("ppModalidade").value,
+    regiao:     document.getElementById("ppRegiao").value,
+    prazo:      document.getElementById("ppPrazo").value,
+    qtd:        document.getElementById("ppQtd").value
+  };
+}
+
+let proposalCtx = { idx:null };
+
+function propNumber(){
+  const d = new Date();
+  const p = n => String(n).padStart(2,"0");
+  return `BRN27-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${String(Math.floor(Math.random()*9000)+1000)}`;
+}
+function fmtDate(d){ return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"}); }
+
+function renderProposalSheet(){
+  const s = G3.catalogo[proposalCtx.idx];
+  if(!s) return;
+  const o = currentOpts();
+  const v = proposalValues(s, o);
+  const pr = G3.premissas || {};
+  const veic = (G3.veiculos||[]).find(x=>x.plataforma===s.plataforma) || {};
+  const modLabel = o.modalidade==="seca" ? "Locação seca (somente a unidade equipada)" : "Turnkey (operação completa com equipe e insumos)";
+  const regLabel = o.regiao==="amazonia" ? "Amazônia Legal (adicional logístico de "+PCT(pr.amazonia)+")" : "Nacional";
+  const hoje = new Date();
+  const val = new Date(hoje.getTime()+30*864e5);
+  if(!proposalCtx.num) proposalCtx.num = propNumber();
+
+  const ancoras = (G3.ancoras||[]).slice(0,5).map(a=>
+    `<tr><td>${a.referencia}</td><td class="num">${BRL(a.valor)}/mês</td><td>${a.escopo||""}</td></tr>`).join("");
+
+  document.getElementById("proposalSheet").innerHTML = `
+    <header class="ps-head">
+      <div class="ps-logo"><img src="assets/logo.png" alt="Brain27 Group"></div>
+      <div class="ps-meta">
+        <div><span>Proposta nº</span><b>${proposalCtx.num}</b></div>
+        <div><span>Data</span><b>${fmtDate(hoje)}</b></div>
+        <div><span>Validade</span><b>${fmtDate(val)}</b></div>
+      </div>
+    </header>
+    <h1 class="ps-title">Proposta Técnica — Unidade Móvel de Saúde</h1>
+    <p class="ps-obj"><b>Objeto:</b> Fornecimento/locação de unidade móvel para o serviço de
+       <b>${s.servico}</b>, na plataforma <b>${s.plataforma}</b>, incluindo estrutura, equipamentos${o.modalidade==="turnkey"?", equipe técnica e insumos":""} conforme especificação abaixo.</p>
+
+    <section class="ps-sec">
+      <h2>1. Especificação da unidade</h2>
+      <table class="ps-kv">
+        <tr><th>Serviço / finalidade</th><td>${s.servico}</td></tr>
+        <tr><th>Plataforma veicular</th><td>${s.plataforma} — ${veic.obs||""}</td></tr>
+        <tr><th>Capacidade estimada</th><td>${s.atendMes?("~"+s.atendMes+" atendimentos/mês"):"sob demanda"}</td></tr>
+        <tr><th>Configuração / equipamentos</th><td>${s.obs||"Conforme termo de referência do serviço."}</td></tr>
+        <tr><th>Categoria</th><td>${s.categoria||"—"}</td></tr>
+      </table>
+    </section>
+
+    <section class="ps-sec">
+      <h2>2. Composição do investimento (referência mensal)</h2>
+      <table class="ps-comp">
+        <tr><td>Ativo — veículo base</td><td class="num">${BRL(s.veiculoBase)}</td></tr>
+        <tr><td>Ativo — kit de equipamentos</td><td class="num">${BRL(s.kitEquip)}</td></tr>
+        <tr class="ps-sub"><td>Ativo total imobilizado</td><td class="num">${BRL(s.ativoTotal)}</td></tr>
+        <tr><td>Locação seca da unidade (R$/mês)</td><td class="num">${BRL(s.seca)}</td></tr>
+        <tr><td>Operação — motorista, deslocamento, manutenção (R$/mês)</td><td class="num">${BRL(s.operacao)}</td></tr>
+        <tr><td>Equipe clínica + insumos (R$/mês)</td><td class="num">${BRL(s.equipeInsumos)}</td></tr>
+        <tr class="ps-sub"><td>Custo direto (R$/mês)</td><td class="num">${BRL(s.custoDireto)}</td></tr>
+        <tr class="ps-total"><td>Turnkey — operação completa (R$/mês)</td><td class="num">${BRL(s.turnkey)}</td></tr>
+      </table>
+    </section>
+
+    <section class="ps-sec ps-highlight">
+      <h2>3. Modalidade e valores contratados</h2>
+      <table class="ps-kv">
+        <tr><th>Modalidade</th><td>${modLabel}</td></tr>
+        <tr><th>Abrangência</th><td>${regLabel}</td></tr>
+        <tr><th>Quantidade de unidades</th><td>${v.qtd}</td></tr>
+        <tr><th>Prazo do contrato</th><td>${v.meses} meses</td></tr>
+        <tr><th>Valor mensal por unidade</th><td>${BRL2(v.mensalUnit)}</td></tr>
+        <tr><th>Valor mensal total (${v.qtd} un.)</th><td>${BRL2(v.mensalTotal)}</td></tr>
+      </table>
+      <div class="ps-global"><span>Valor global do contrato (${v.qtd} un. × ${v.meses} meses)</span><strong>${BRL2(v.global)}</strong></div>
+    </section>
+
+    <section class="ps-sec">
+      <h2>4. Premissas de precificação</h2>
+      <ul class="ps-prem">
+        <li>Taxa de locação mensal sobre o ativo: <b>${PCT(pr.taxaLocacao)}</b></li>
+        <li>Overhead administrativo: <b>${PCT(pr.overhead)}</b></li>
+        <li>Tributos sobre o preço (Lucro Presumido — serviços): <b>${PCT(pr.tributos)}</b></li>
+        <li>Margem operacional: <b>${PCT(pr.margem)}</b></li>
+        <li>Adicional Amazônia Legal (quando aplicável): <b>${PCT(pr.amazonia)}</b></li>
+      </ul>
+    </section>
+
+    <section class="ps-sec">
+      <h2>5. Referências de mercado (justificativa de preço)</h2>
+      <table class="ps-anc">
+        <thead><tr><th>Referência</th><th class="num">Valor</th><th>Escopo</th></tr></thead>
+        <tbody>${ancoras}</tbody>
+      </table>
+    </section>
+
+    <section class="ps-sec">
+      <h2>6. Condições gerais</h2>
+      <ul class="ps-cond">
+        <li>Valores <b>estimativos de referência</b>, elaborados a partir do Prospecto G3 e ancorados em editais públicos (AgSUS 2025). Não constituem proposta comercial vinculante.</li>
+        <li>Proposta válida por 30 dias. Reajuste anual por índice setorial. Impostos conforme legislação vigente.</li>
+        <li>Locação seca não inclui equipe clínica, insumos e consumíveis; o turnkey contempla a operação completa.</li>
+        <li>Escopo detalhado, cronograma de montagem e adequações regulatórias (ANVISA, PNQM, proteção radiológica) definidos no Termo de Referência.</li>
+      </ul>
+    </section>
+
+    <footer class="ps-foot">
+      <div><b>Brain27 Group</b> — Unidades Móveis de Saúde · gersongomes@brain27.com.br</div>
+      <div>Documento gerado pela plataforma Brain27 em ${fmtDate(hoje)}.</div>
+    </footer>`;
+}
+
+function openProposal(idx){
+  proposalCtx = { idx, num:null };
+  const modal = document.getElementById("proposalModal");
+  renderProposalSheet();
+  modal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+function closeProposal(){
+  document.getElementById("proposalModal").hidden = true;
+  document.body.style.overflow = "";
+}
+
+function initPortfolio(){
+  if(!document.getElementById("pfGrid")) return;
+  renderPortfolio();
+  const search = document.getElementById("pfSearch");
+  if(search) search.addEventListener("input", ()=>{ pfState.q = search.value; renderPortfolio(); });
+}
+
+function initProposalModal(){
+  const modal = document.getElementById("proposalModal");
+  if(!modal) return;
+  modal.querySelectorAll("[data-close]").forEach(el=> el.onclick = closeProposal);
+  document.addEventListener("keydown", e=>{ if(e.key==="Escape" && !modal.hidden) closeProposal(); });
+  ["ppModalidade","ppRegiao","ppPrazo","ppQtd"].forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.addEventListener("input", renderProposalSheet);
+  });
+  const printBtn = document.getElementById("ppPrint");
+  if(printBtn) printBtn.onclick = ()=> window.print();
+  const sendBtn = document.getElementById("ppSend");
+  if(sendBtn) sendBtn.onclick = ()=>{
+    const s = G3.catalogo[proposalCtx.idx];
+    const o = currentOpts();
+    const v = proposalValues(s, o);
+    const field = document.getElementById("configField");
+    if(field) field.value = `Proposta ${proposalCtx.num||""} — ${s.servico} (${s.plataforma}) · ${o.modalidade==="seca"?"Locação seca":"Turnkey"}/${o.regiao} · ${v.qtd} un × ${v.meses} m · global ${BRL(v.global)}`;
+    const msg = document.querySelector('#contatoForm [name="msg"]');
+    if(msg && !msg.value) msg.value = `Tenho interesse na proposta ${proposalCtx.num||""} para ${s.servico}. Favor detalhar escopo e condições.`;
+    closeProposal();
+    document.getElementById("contato").scrollIntoView({behavior:"smooth"});
+  };
+}
+
 /* ---------- Boot ---------- */
 document.addEventListener("DOMContentLoaded", ()=>{
   loadImages();
@@ -484,4 +731,6 @@ document.addEventListener("DOMContentLoaded", ()=>{
   initNav();
   initForm();
   initReset();
+  initPortfolio();
+  initProposalModal();
 });

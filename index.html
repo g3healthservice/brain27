@@ -24,6 +24,7 @@
     <nav class="main-nav" aria-label="Navegação principal">
       <a href="#unidades">Unidades</a>
       <a href="#servicos">Serviços</a>
+      <a href="#portfolio">Portfólio</a>
       <a href="#configurador">Configurador</a>
       <a href="#processo">Como funciona</a>
       <a href="#infra">Infraestrutura</a>
@@ -144,6 +145,26 @@
     </div>
 
     <div class="svc-grid" id="svcGrid"><!-- preenchido por JS --></div>
+  </div>
+</section>
+
+<!-- ===================== PORTFÓLIO & INVESTIMENTO ===================== -->
+<section class="section" id="portfolio">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow eyebrow-dark">Portfólio &amp; investimento</span>
+      <h2>Catálogo de serviços com valor de referência</h2>
+      <p class="section-lead">Mais de 20 configurações prontas — da van de coleta à carreta de tomografia. Cada serviço traz o investimento mensal de referência e <strong>gera uma proposta técnica completa</strong> em segundos.</p>
+    </div>
+
+    <div class="pf-toolbar">
+      <div class="pf-filter-group"><span class="pf-filter-label">Categoria</span><div class="pf-chips" id="pfCat"></div></div>
+      <div class="pf-filter-group"><span class="pf-filter-label">Plataforma</span><div class="pf-chips" id="pfPlat"></div></div>
+      <input type="search" id="pfSearch" class="pf-search" placeholder="Buscar serviço…" aria-label="Buscar serviço" />
+    </div>
+
+    <div class="pf-grid" id="pfGrid"><!-- preenchido por JS --></div>
+    <p class="pf-note">Valores <strong>estimativos de referência</strong> (R$/mês) calculados a partir do Prospecto G3 e ancorados em editais públicos (AgSUS 2025). <b>Locação seca</b> = apenas a unidade equipada; <b>turnkey</b> = operação completa com equipe e insumos. Não constituem proposta comercial vinculante.</p>
   </div>
 </section>
 
@@ -383,6 +404,44 @@
   </div>
 </footer>
 
+<!-- ===================== MODAL — PROPOSTA TÉCNICA ===================== -->
+<div class="proposal-modal" id="proposalModal" hidden>
+  <div class="proposal-backdrop" data-close></div>
+  <div class="proposal-dialog" role="dialog" aria-modal="true" aria-label="Proposta técnica">
+    <div class="proposal-controls no-print">
+      <div class="ppc-group">
+        <label>Modalidade
+          <select id="ppModalidade">
+            <option value="turnkey">Turnkey — operação completa</option>
+            <option value="seca">Locação seca — só a unidade</option>
+          </select>
+        </label>
+        <label>Região
+          <select id="ppRegiao">
+            <option value="nacional">Nacional</option>
+            <option value="amazonia">Amazônia Legal (+30%)</option>
+          </select>
+        </label>
+        <label>Prazo (meses)
+          <input type="number" id="ppPrazo" min="1" max="120" value="12" />
+        </label>
+        <label>Unidades
+          <input type="number" id="ppQtd" min="1" max="99" value="1" />
+        </label>
+      </div>
+      <div class="ppc-actions">
+        <button class="btn btn-outline btn-sm" id="ppPrint" type="button">Imprimir / PDF</button>
+        <button class="btn btn-accent btn-sm" id="ppSend" type="button">Enviar por e-mail</button>
+        <button class="btn btn-text btn-sm" data-close type="button">Fechar ✕</button>
+      </div>
+    </div>
+    <div class="proposal-scroll">
+      <article class="proposal-sheet" id="proposalSheet"><!-- gerado por JS --></article>
+    </div>
+  </div>
+</div>
+
+<script src="catalogo.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
